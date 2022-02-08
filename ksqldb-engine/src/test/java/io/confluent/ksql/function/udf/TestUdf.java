@@ -18,6 +18,7 @@ package io.confluent.ksql.function.udf;
 import io.confluent.ksql.schema.ksql.types.SqlStruct;
 import io.confluent.ksql.schema.ksql.types.SqlType;
 import io.confluent.ksql.schema.ksql.types.SqlTypes;
+import java.util.Collections;
 import java.util.List;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
@@ -67,4 +68,19 @@ public class TestUdf {
   public SqlType structProvider(final List<SqlType> params) {
     return RETURN;
   }
+
+  @Udf(description = "Sample Bad", schemaProvider = "exit")
+  public Struct returnList(String string) {
+    System.out.println("In returnList");
+    System.exit(-1);
+    return null;
+  }
+
+  @UdfSchemaProvider
+  public SqlType exit(final List<SqlType> params) {
+    System.out.println("In schemaProvider");
+    System.exit(-3);
+    return RETURN;
+  }
+
 }

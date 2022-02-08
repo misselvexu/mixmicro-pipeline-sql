@@ -50,7 +50,6 @@ import io.confluent.ksql.function.udf.UdfDescription;
 import io.confluent.ksql.function.udf.UdfParameter;
 import io.confluent.ksql.function.udf.UdfSchemaProvider;
 import io.confluent.ksql.metastore.TypeRegistry;
-import io.confluent.ksql.metrics.MetricCollectors;
 import io.confluent.ksql.name.FunctionName;
 import io.confluent.ksql.schema.ksql.SqlArgument;
 import io.confluent.ksql.schema.ksql.SqlTypeParser;
@@ -61,6 +60,7 @@ import io.confluent.ksql.schema.ksql.types.SqlMap;
 import io.confluent.ksql.schema.ksql.types.SqlStruct;
 import io.confluent.ksql.schema.ksql.types.SqlType;
 import io.confluent.ksql.schema.ksql.types.SqlTypes;
+import io.confluent.ksql.security.ExtensionSecurityManager;
 import io.confluent.ksql.test.util.KsqlTestFolder;
 import io.confluent.ksql.util.KsqlConfig;
 import io.confluent.ksql.util.KsqlException;
@@ -135,6 +135,37 @@ public class UdfLoaderTest {
     final Kudf substring2 = function.getFunction(
         Arrays.asList(SqlArgument.of(SqlTypes.STRING), SqlArgument.of(SqlTypes.INTEGER), SqlArgument.of(SqlTypes.INTEGER))).newInstance(ksqlConfig);
     assertThat(substring2.evaluate("foo", 2, 1), equalTo("o"));
+  }
+
+  @Test
+  public void shouldLoadBadFunctionButNotLetItExit() {
+    final List<SqlArgument> argList =  Arrays.asList(SqlArgument.of(SqlTypes.STRING));
+    // We do need to set up the ExtensionSecurityManager for our test.
+    // This is controlled by a feature flag and in this test, we just directly enable it.
+    SecurityManager manager = System.getSecurityManager();
+    System.setSecurityManager(ExtensionSecurityManager.INSTANCE);
+
+    final UdfFactory function = FUNC_REG.getUdfFactory(FunctionName.of("test_udf"));
+    assertThat(function, not(nullValue()));
+
+    KsqlScalarFunction ksqlScalarFunction = function.getFunction(argList);
+    final Kudf badFunction = ksqlScalarFunction.newInstance(ksqlConfig);
+
+    final Exception e1 = assertThrows(
+        KsqlException.class,
+        () -> ksqlScalarFunction.getReturnType(argList)
+    );
+    assertThat(e1.getMessage(), containsString(
+        "Cannot invoke the schema provider method exit for UDF test_udf."));
+
+    final Exception e2 = assertThrows(
+        KsqlFunctionException.class,
+        () -> badFunction.evaluate("foo")
+    );
+    assertThat(e2.getMessage(), containsString(
+        "Failed to invoke function public org.apache.kafka.connect.data.Struct "
+            + "io.confluent.ksql.function.udf.TestUdf.returnList(java.lang.String)"));
+    System.setSecurityManager(manager);
   }
 
   @SuppressWarnings("unchecked")

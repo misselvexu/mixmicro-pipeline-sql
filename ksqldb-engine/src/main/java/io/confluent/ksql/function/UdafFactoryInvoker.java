@@ -85,10 +85,10 @@ class UdafFactoryInvoker implements FunctionSignature {
     try {
       ExtensionSecurityManager.INSTANCE.pushInUdf();
       final Udaf udaf = (Udaf)method.invoke(null, factoryArgs);
-      ExtensionSecurityManager.INSTANCE.popOutUdf();
       if (udaf instanceof Configurable) {
         ((Configurable) udaf).configure(initArgs.config());
       }
+      ExtensionSecurityManager.INSTANCE.popOutUdf();
 
       final KsqlAggregateFunction function;
       if (TableUdaf.class.isAssignableFrom(method.getReturnType())) {

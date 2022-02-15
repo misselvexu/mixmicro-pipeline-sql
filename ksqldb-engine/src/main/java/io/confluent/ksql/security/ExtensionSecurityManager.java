@@ -16,6 +16,7 @@
 package io.confluent.ksql.security;
 
 import io.confluent.ksql.function.FunctionLoaderUtils;
+import io.confluent.ksql.function.UdfLoader;
 import io.confluent.ksql.function.udf.PluggableUdf;
 import java.security.AllPermission;
 import java.security.CodeSource;
@@ -107,6 +108,9 @@ public final class ExtensionSecurityManager extends SecurityManager {
    */
   private boolean validateCaller() {
     final Class caller = getClassContext()[2];
-    return caller.equals(PluggableUdf.class) || caller.equals(FunctionLoaderUtils.class);
+    System.out.println("Caller is " + caller);
+    return caller.equals(PluggableUdf.class)
+        || caller.equals(FunctionLoaderUtils.class)
+        || caller.equals(UdfLoader.class);
   }
 }

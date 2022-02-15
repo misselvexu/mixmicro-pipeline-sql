@@ -82,6 +82,7 @@ class UdafFactoryInvoker implements FunctionSignature {
   KsqlAggregateFunction createFunction(final AggregateFunctionInitArguments initArgs) {
     final Object[] factoryArgs = initArgs.args().toArray();
     try {
+      // JNH: T O D O!
       final Udaf udaf = (Udaf)method.invoke(null, factoryArgs);
 
       if (udaf instanceof Configurable) {

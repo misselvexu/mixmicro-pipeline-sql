@@ -219,10 +219,21 @@ public class UdfLoaderTest {
 
   @Test
   public void shouldNotLetBadUdafsExit() {
+    // We do need to set up the ExtensionSecurityManager for our test.
+    // This is controlled by a feature flag and in this test, we just directly enable it.
+    SecurityManager manager = System.getSecurityManager();
+    System.setSecurityManager(ExtensionSecurityManager.INSTANCE);
+
     // This will exit via create
-    ((KsqlAggregateFunction) FUNC_REG
-        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.array(SqlTypes.INTEGER),
-            AggregateFunctionInitArguments.EMPTY_ARGS)).aggregate("foo", 2L);
+    final Exception e1 = assertThrows(
+        KsqlException.class,
+        () ->
+            ((KsqlAggregateFunction) FUNC_REG
+                .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.array(SqlTypes.INTEGER),
+                    AggregateFunctionInitArguments.EMPTY_ARGS)).aggregate("foo", 2L)
+    );
+    assertThat(e1.getMessage(), containsString(
+        "Failed to invoke UDAF factory method"));
 
 //    // This will exit via configure
 //    ((Configurable)FUNC_REG
@@ -263,6 +274,7 @@ public class UdfLoaderTest {
 //    ((TableAggregationFunction) FUNC_REG
 //        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.BIGINT,
 //            AggregateFunctionInitArguments.EMPTY_ARGS)).undo(1L, 1L);
+    System.setSecurityManager(manager);
   }
 
 

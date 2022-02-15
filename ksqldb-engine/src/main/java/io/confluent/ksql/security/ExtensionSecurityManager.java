@@ -111,6 +111,7 @@ public final class ExtensionSecurityManager extends SecurityManager {
     System.out.println("Caller is " + caller);
     return caller.equals(PluggableUdf.class)
         || caller.equals(FunctionLoaderUtils.class)
-        || caller.equals(UdfLoader.class);
+        || caller.equals(UdfLoader.class)
+        || caller.getName().equals("io.confluent.ksql.function.UdafFactoryInvoker");
   }
 }

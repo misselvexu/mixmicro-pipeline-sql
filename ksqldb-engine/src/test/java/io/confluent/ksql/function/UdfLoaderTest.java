@@ -218,6 +218,55 @@ public class UdfLoaderTest {
   }
 
   @Test
+  public void shouldNotLetBadUdafsExit() {
+    // This will exit via create
+    ((KsqlAggregateFunction) FUNC_REG
+        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.array(SqlTypes.INTEGER),
+            AggregateFunctionInitArguments.EMPTY_ARGS)).aggregate("foo", 2L);
+
+//    // This will exit via configure
+//    ((Configurable)FUNC_REG
+//        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.INTEGER,
+//            AggregateFunctionInitArguments.EMPTY_ARGS)).configure(Collections.EMPTY_MAP);
+//
+//    // This will exit via initialize
+//        FUNC_REG
+//        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.DOUBLE,
+//            AggregateFunctionInitArguments.EMPTY_ARGS).getInitialValueSupplier().get();
+//
+//    // This will exit via map
+//    ((KsqlAggregateFunction) FUNC_REG
+//        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.BOOLEAN,
+//            AggregateFunctionInitArguments.EMPTY_ARGS)).getResultMapper().apply(true);
+//
+//    // This will exit via merge
+//    final Schema schema = SchemaBuilder.struct()
+//        .field("A", Schema.OPTIONAL_INT32_SCHEMA)
+//        .field("B", Schema.OPTIONAL_INT32_SCHEMA)
+//        .optional()
+//        .build();
+//    final SqlStruct sqlSchema = SqlTypes.struct()
+//        .field("A", SqlTypes.INTEGER)
+//        .field("B", SqlTypes.INTEGER)
+//        .build();
+//    final Struct input = new Struct(schema).put("A", 0).put("B", 0);
+//    ((KsqlAggregateFunction) FUNC_REG.getAggregateFunction(FunctionName.of("bad_test_udaf"),
+//        sqlSchema,
+//            AggregateFunctionInitArguments.EMPTY_ARGS)).getMerger().apply(null, input, input);
+//
+//    // This will exit via aggregate
+//    ((KsqlAggregateFunction) FUNC_REG
+//        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.STRING,
+//            AggregateFunctionInitArguments.EMPTY_ARGS)).aggregate("foo", 2L);
+//
+//    // This will exit via undo.
+//    ((TableAggregationFunction) FUNC_REG
+//        .getAggregateFunction(FunctionName.of("bad_test_udaf"), SqlTypes.BIGINT,
+//            AggregateFunctionInitArguments.EMPTY_ARGS)).undo(1L, 1L);
+  }
+
+
+  @Test
   public void shouldLoadDecimalUdfs() {
     // Given:
     final SqlDecimal schema = SqlTypes.decimal(2, 1);

@@ -270,13 +270,17 @@ public class UdtfLoaderTest {
         "Failed to invoke function public java.util.List "
             + "io.confluent.ksql.function.udf.BadTestUdtf.listBooleanReturn(boolean)"));
 
-    /*
-    FUNC_REG.getTableFunction(
-        FunctionName.of("bad_test_udtf"),
-        Collections.singletonList(SqlArgument.of(SqlTypes.DOUBLE))).apply(1.234);
-     */
+    final Exception e4 = assertThrows(
+        KsqlFunctionException.class,
+        () ->
+            FUNC_REG.getTableFunction(
+                FunctionName.of("bad_test_udtf"),
+                Collections.singletonList(SqlArgument.of(SqlTypes.DOUBLE))).apply(1.234)
+    );
+    assertThat(e4.getMessage(), containsString(
+        "Failed to invoke function public java.util.List "
+            + "io.confluent.ksql.function.udf.BadTestUdtf.listDoubleReturn(double)"));
 
-    // If we prevent calls to `System`, we may not be able to undo this.
     System.setSecurityManager(manager);
   }
 

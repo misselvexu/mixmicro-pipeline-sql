@@ -98,8 +98,14 @@ public final class ExtensionSecurityManager extends SecurityManager {
 
   @Override
   public void checkPermission(final Permission perm) {
-    if (inUdfExecution() && perm instanceof ReflectPermission) {
-      throw new SecurityException("A UDF attempted to use reflection.");
+    System.out.println("Checking permission " + perm);
+    if (inUdfExecution()) {
+      if (perm instanceof ReflectPermission) {
+        throw new SecurityException("A UDF attempted to use reflection.");
+      }
+      if (perm instanceof RuntimePermission) {
+        throw new SecurityException("A UDF attempted to make a system call.");
+      }
     }
     super.checkPermission(perm);
   }

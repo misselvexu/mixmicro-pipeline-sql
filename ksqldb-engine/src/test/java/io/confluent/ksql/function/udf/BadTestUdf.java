@@ -22,7 +22,7 @@ import org.apache.kafka.common.Configurable;
 import org.apache.kafka.connect.data.Struct;
 
 @UdfDescription(name="bad_test_udf", description = "test")
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "DM_EXIT"})
 public class BadTestUdf implements Configurable {
   @Override
   public void configure(Map<String, ?> map) {

@@ -68,6 +68,7 @@ public class TestUdf {
     return RETURN;
   }
 
+  @SuppressWarnings("DM_EXIT")
   @Udf(description = "Sample Bad", schemaProvider = "exit")
   public Struct returnList(String string) {
     System.out.println("In returnList");
@@ -75,6 +76,7 @@ public class TestUdf {
     return null;
   }
 
+  @SuppressWarnings("DM_EXIT")
   @UdfSchemaProvider
   public SqlType exit(final List<SqlType> params) {
     System.out.println("In schemaProvider");

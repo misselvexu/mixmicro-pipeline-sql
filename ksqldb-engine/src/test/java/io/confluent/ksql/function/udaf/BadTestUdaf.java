@@ -23,6 +23,7 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 
+@SuppressWarnings("DM_EXIT")
 @UdafDescription(
     name = "bad_test_udaf",
     description = "bad_test_udaf",
@@ -221,18 +222,18 @@ public final class BadTestUdaf {
 
       @Override
       public Boolean aggregate(Boolean current, Boolean aggregate) {
-        return null;
+        return false;
       }
 
       @Override
       public Boolean merge(Boolean aggOne, Boolean aggTwo) {
-        return null;
+        return false;
       }
 
       @Override
       public Boolean map(Boolean agg) {
         System.exit(-90);
-        return null;
+        return false;
       }
     };
   }

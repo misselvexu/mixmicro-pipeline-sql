@@ -18,6 +18,7 @@ package io.confluent.ksql.security;
 import io.confluent.ksql.function.FunctionLoaderUtils;
 import io.confluent.ksql.function.UdfLoader;
 import io.confluent.ksql.function.udf.PluggableUdf;
+import java.lang.reflect.ReflectPermission;
 import java.security.AllPermission;
 import java.security.CodeSource;
 import java.security.Permission;
@@ -95,6 +96,13 @@ public final class ExtensionSecurityManager extends SecurityManager {
     super.checkExec(cmd);
   }
 
+  @Override
+  public void checkPermission(final Permission perm) {
+    if (inUdfExecution() && perm instanceof ReflectPermission) {
+      throw new SecurityException("A UDF attempted to use reflection.");
+    }
+    super.checkPermission(perm);
+  }
 
   private boolean inUdfExecution() {
     final Stack<Boolean> executing = UDF_IS_EXECUTING.get();

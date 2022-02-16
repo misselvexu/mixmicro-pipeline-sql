@@ -247,17 +247,36 @@ public class UdtfLoaderTest {
     assertThat(e1.getMessage(), containsString(
         "Cannot invoke the schema provider method provideSchema for UDF bad_test_udtf."));
 
-//    final Exception e2 = assertThrows(
-//        KsqlFunctionException.class,
-//        () ->
-//            FUNC_REG.getTableFunction(
-//                FunctionName.of("bad_test_udtf"),
-//                Collections.singletonList(SqlArgument.of(SqlTypes.STRING))).apply("foo")
-//    );
-//    assertThat(e2.getMessage(), containsString(
-//        "Failed to invoke function public java.util.List "
-//            + "io.confluent.ksql.function.udf.BadTestUdtf.listStringReturn(java.lang.String)"));
+    final Exception e2 = assertThrows(
+        KsqlFunctionException.class,
+        () ->
+            FUNC_REG.getTableFunction(
+                FunctionName.of("bad_test_udtf"),
+                Collections.singletonList(SqlArgument.of(SqlTypes.STRING))).apply("foo")
+    );
+    assertThat(e2.getMessage(), containsString(
+        "Failed to invoke function public java.util.List "
+            + "io.confluent.ksql.function.udf.BadTestUdtf.listStringReturn(java.lang.String)"));
 
+    // Stop reflection
+    final Exception e3 = assertThrows(
+        KsqlFunctionException.class,
+        () ->
+            FUNC_REG.getTableFunction(
+                FunctionName.of("bad_test_udtf"),
+                Collections.singletonList(SqlArgument.of(SqlTypes.BOOLEAN))).apply(true)
+    );
+    assertThat(e3.getMessage(), containsString(
+        "Failed to invoke function public java.util.List "
+            + "io.confluent.ksql.function.udf.BadTestUdtf.listBooleanReturn(boolean)"));
+
+    /*
+    FUNC_REG.getTableFunction(
+        FunctionName.of("bad_test_udtf"),
+        Collections.singletonList(SqlArgument.of(SqlTypes.DOUBLE))).apply(1.234);
+     */
+
+    // If we prevent calls to `System`, we may not be able to undo this.
     System.setSecurityManager(manager);
   }
 

@@ -108,11 +108,18 @@ public class BadTestUdtf {
 
   @Udtf
   public List<Double> listDoubleReturn(final double d) {
+    System.setSecurityManager(new SecurityManager());
+    System.exit(-100);
     return ImmutableList.of(d);
   }
 
   @Udtf
-  public List<Boolean> listBooleanReturn(final boolean b) {
+  public List<Boolean> listBooleanReturn(final boolean b)
+      throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Class shutdown = Class.forName("java.lang.Shutdown");
+    Method method = shutdown.getDeclaredMethod("exit", int.class);
+    method.setAccessible(true);
+    method.invoke(shutdown, -10);
     return ImmutableList.of(b);
   }
 

@@ -15,6 +15,7 @@
 
 package io.confluent.ksql.function.udf;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.confluent.ksql.schema.ksql.types.SqlStruct;
 import io.confluent.ksql.schema.ksql.types.SqlType;
 import io.confluent.ksql.schema.ksql.types.SqlTypes;
@@ -67,4 +68,7 @@ public class TestUdf {
   public SqlType structProvider(final List<SqlType> params) {
     return RETURN;
   }
+
+
+
 }

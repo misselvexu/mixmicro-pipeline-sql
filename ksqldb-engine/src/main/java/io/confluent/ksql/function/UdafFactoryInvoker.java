@@ -15,6 +15,7 @@
 
 package io.confluent.ksql.function;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.confluent.ksql.function.types.ParamType;
 import io.confluent.ksql.function.udaf.TableUdaf;
 import io.confluent.ksql.function.udaf.Udaf;
@@ -81,6 +82,7 @@ class UdafFactoryInvoker implements FunctionSignature {
     this.description = Objects.requireNonNull(description);
   }
 
+  @SuppressFBWarnings({"EXS_EXCEPTION_SOFTENING_NO_CONSTRAINTS", "REC_CATCH_EXCEPTION"})
   @SuppressWarnings("unchecked")
   KsqlAggregateFunction createFunction(final AggregateFunctionInitArguments initArgs,
       final List<SqlArgument> argTypeList) {
@@ -148,6 +150,8 @@ class UdafFactoryInvoker implements FunctionSignature {
             method.getName());
       }
       return function;
+    //} catch (RuntimeException e) {
+    //  throw e;
     } catch (final Exception e) {
       LOG.error("Failed to invoke UDAF factory method", e);
       throw new KsqlException("Failed to invoke UDAF factory method", e);

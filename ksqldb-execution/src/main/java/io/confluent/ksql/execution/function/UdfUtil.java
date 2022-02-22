@@ -27,7 +27,6 @@ import io.confluent.ksql.function.types.ParamTypes;
 import io.confluent.ksql.function.types.StructType;
 import io.confluent.ksql.name.FunctionName;
 import io.confluent.ksql.util.KsqlException;
-import io.vertx.codegen.doc.Tag.Param;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

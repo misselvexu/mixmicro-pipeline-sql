@@ -32,6 +32,9 @@ import io.confluent.ksql.function.KsqlFunctionException;
 import io.confluent.ksql.function.udaf.Udaf;
 import io.confluent.ksql.function.udaf.UdafDescription;
 import io.confluent.ksql.function.udaf.UdafFactory;
+import io.confluent.ksql.schema.ksql.SchemaConverters;
+import io.confluent.ksql.schema.ksql.SqlArgument;
+import io.confluent.ksql.schema.ksql.types.SqlType;
 import io.confluent.ksql.util.KsqlConstants;
 import java.nio.ByteBuffer;
 import java.sql.Date;
@@ -44,6 +47,7 @@ import java.util.stream.Collectors;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 
+//    name = "EARLIEST_BY_OFFSET_OLD",
 @UdafDescription(
     name = "EARLIEST_BY_OFFSET",
     description = EarliestByOffset.DESCRIPTION,
@@ -58,6 +62,23 @@ public final class EarliestByOffset {
   }
 
   static final AtomicLong sequence = new AtomicLong();
+
+  @UdafFactory(description = "return the earliest value of an"
+      + " integer column",
+      aggregateSchema = "STRUCT<SEQ BIGINT, VAL INT>")
+  public static <T> Udaf<T, Struct, T> earliestT(final SqlArgument sqlArgument) {
+    return earliestT(sqlArgument, true);
+  }
+
+  @UdafFactory(description = "return the earliest value of an integer column",
+      aggregateSchema = "STRUCT<SEQ BIGINT, VAL INT>")
+  public static <T> Udaf<T, Struct, T> earliestT(final SqlArgument sqlArgument,
+      final boolean ignoreNulls) {
+    System.out.println("Made it here!");
+    // JNH: Use paramTYpe to build aggregate schema.
+    return earliest(sqlArgument.getSqlTypeOrThrow(), ignoreNulls);
+  }
+
 
   @UdafFactory(description = "return the earliest value of an integer column",
       aggregateSchema = "STRUCT<SEQ BIGINT, VAL INT>")
@@ -319,6 +340,77 @@ public final class EarliestByOffset {
       final boolean ignoreNulls
   ) {
     return new Udaf<T, Struct, T>() {
+
+      @Override
+      public Struct initialize() {
+        return null;
+      }
+
+      @Override
+      public Struct aggregate(final T current, final Struct aggregate) {
+        if (aggregate != null) {
+          return aggregate;
+        }
+
+        if (current == null && ignoreNulls) {
+          return null;
+        }
+
+        return createStruct(structSchema, current);
+      }
+
+      @Override
+      public Struct merge(final Struct aggOne, final Struct aggTwo) {
+        if (aggOne == null) {
+          return aggTwo;
+        }
+
+        if (aggTwo == null) {
+          return aggOne;
+        }
+
+        // When merging we need some way of evaluating the "earliest" one.
+        // We do this by keeping track of the sequence of when it was originally processed
+        if (INTERMEDIATE_STRUCT_COMPARATOR.compare(aggOne, aggTwo) < 0) {
+          return aggOne;
+        } else {
+          return aggTwo;
+        }
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T map(final Struct agg) {
+        if (agg == null) {
+          return null;
+        }
+
+        return (T) agg.get(VAL_FIELD);
+      }
+    };
+  }
+
+  @VisibleForTesting
+  static <T> Udaf<T, Struct, T> earliest(
+      final SqlType sqlType,
+      final boolean ignoreNulls
+  ) {
+    return new Udaf<T, Struct, T>() {
+      final Schema connectType =
+          SchemaConverters.sqlToConnectConverter().toConnectSchema(sqlType);
+      final Schema structSchema = KudafByOffsetUtils.buildSchema(connectType);
+      final SqlType aggregateType =
+          SchemaConverters.connectToSqlConverter().toSqlType(structSchema);
+
+      @Override
+      public SqlType aggregateSqlType() {
+        return aggregateType;
+      }
+
+      @Override
+      public SqlType returnSqlType() {
+        return sqlType;
+      }
 
       @Override
       public Struct initialize() {

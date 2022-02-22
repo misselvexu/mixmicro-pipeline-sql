@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,6 +58,11 @@ public final class FunctionLoaderUtils {
   ) {
     return IntStream.range(0, method.getParameterCount()).mapToObj(idx -> {
       final Type type = method.getGenericParameterTypes()[idx];
+      if (type instanceof Class<?> && SqlArgument.class.isAssignableFrom((Class<?>) type)) {
+        System.out.println("Got here! Skipping " + type);
+        return null; // We throw away the ParamType...
+      }
+
       final Optional<UdfParameter> annotation = Arrays.stream(method.getParameterAnnotations()[idx])
           .filter(UdfParameter.class::isInstance)
           .map(UdfParameter.class::cast)
@@ -89,7 +95,7 @@ public final class FunctionLoaderUtils {
       final String doc = annotation.map(UdfParameter::description).orElse("");
       final boolean isVariadicParam = idx == method.getParameterCount() - 1 && method.isVarArgs();
       return new ParameterInfo(name, paramType, doc, isVariadicParam);
-    }).collect(Collectors.toList());
+    }).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   @VisibleForTesting

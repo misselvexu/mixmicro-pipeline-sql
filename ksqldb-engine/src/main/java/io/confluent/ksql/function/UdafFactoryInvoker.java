@@ -20,10 +20,13 @@ import io.confluent.ksql.function.udaf.TableUdaf;
 import io.confluent.ksql.function.udaf.Udaf;
 import io.confluent.ksql.name.FunctionName;
 import io.confluent.ksql.schema.ksql.SchemaConverters;
+import io.confluent.ksql.schema.ksql.SqlArgument;
 import io.confluent.ksql.schema.ksql.SqlTypeParser;
+import io.confluent.ksql.schema.ksql.types.SqlType;
 import io.confluent.ksql.util.KsqlException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -79,13 +82,45 @@ class UdafFactoryInvoker implements FunctionSignature {
   }
 
   @SuppressWarnings("unchecked")
-  KsqlAggregateFunction createFunction(final AggregateFunctionInitArguments initArgs) {
+  KsqlAggregateFunction createFunction(final AggregateFunctionInitArguments initArgs,
+      final List<SqlArgument> argTypeList) {
     final Object[] factoryArgs = initArgs.args().toArray();
     try {
-      final Udaf udaf = (Udaf)method.invoke(null, factoryArgs);
+      if (method.getParameterTypes().length != 0) {
+        System.out.println("Calling method with parameters: ");
+      }
+      for (Class<?> parameterType : method.getParameterTypes()) {
+        System.out.println("\t" + parameterType);
+      }
+
+      final Udaf udaf;
+      if (Arrays.stream(method.getParameterTypes()).anyMatch(SqlArgument.class::isAssignableFrom)) {
+        System.out.println("Adding sql argument!");
+        final Object[] args = Arrays.copyOf(factoryArgs, factoryArgs.length + 1);
+        args[factoryArgs.length] = argTypeList.get(0);
+        udaf = (Udaf)method.invoke(null, args);
+      } else {
+        udaf = (Udaf)method.invoke(null, factoryArgs);
+      }
+
 
       if (udaf instanceof Configurable) {
         ((Configurable) udaf).configure(initArgs.config());
+      }
+
+      final SqlType aggregateSqlType;
+      final SqlType returnSqlType;
+
+      if (udaf.aggregateSqlType() != null) {
+        aggregateSqlType = udaf.aggregateSqlType();
+      } else {
+        aggregateSqlType = SchemaConverters.functionToSqlConverter().toSqlType(aggregateArgType);
+      }
+
+      if (udaf.returnSqlType() != null) {
+        returnSqlType = udaf.returnSqlType();
+      } else {
+        returnSqlType = SchemaConverters.functionToSqlConverter().toSqlType(aggregateReturnType);
       }
 
       final KsqlAggregateFunction function;
@@ -94,8 +129,8 @@ class UdafFactoryInvoker implements FunctionSignature {
             functionName.text(),
             initArgs.udafIndex(),
             udaf,
-            SchemaConverters.functionToSqlConverter().toSqlType(aggregateArgType),
-            SchemaConverters.functionToSqlConverter().toSqlType(aggregateReturnType),
+            aggregateSqlType,
+            returnSqlType,
             params,
             description,
             metrics,
@@ -105,8 +140,8 @@ class UdafFactoryInvoker implements FunctionSignature {
             functionName.text(),
             initArgs.udafIndex(),
             udaf,
-            SchemaConverters.functionToSqlConverter().toSqlType(aggregateArgType),
-            SchemaConverters.functionToSqlConverter().toSqlType(aggregateReturnType),
+            aggregateSqlType,
+            returnSqlType,
             params,
             description,
             metrics,

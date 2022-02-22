@@ -27,6 +27,7 @@ import io.confluent.ksql.function.types.ParamTypes;
 import io.confluent.ksql.function.types.StructType;
 import io.confluent.ksql.name.FunctionName;
 import io.confluent.ksql.util.KsqlException;
+import io.vertx.codegen.doc.Tag.Param;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -108,7 +109,9 @@ public final class UdfUtil {
 
   public static ParamType getSchemaFromType(final Type type) {
     ParamType schema;
-    if (type instanceof TypeVariable) {
+    if (type instanceof ParamType) {
+      schema = (ParamType) type;
+    } else if (type instanceof TypeVariable) {
       schema = GenericType.of(((TypeVariable) type).getName());
     } else {
       schema = JAVA_TO_ARG_TYPE.get(type);
